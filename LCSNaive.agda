@@ -4,6 +4,7 @@ open import Data.Empty
 open import Data.List
 open import Data.Nat
 open import Data.Nat.Properties
+open import Data.Product
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
@@ -66,6 +67,12 @@ lcs-lemma-2 (_ ∷ _) {[]} = empty
 lcs-lemma-2 (x ∷ xs) {y ∷ ys} with x ≟ y
 lcs-lemma-2 (x ∷ xs) {.x ∷ ys} | yes refl = here (lcs-lemma-2 xs)
 lcs-lemma-2 (x ∷ xs) {y ∷ ys}  | no  x≢y = longest-either (\zs → zs ⊑ y ∷ ys) (there (lcs-lemma-2 (x ∷ xs))) (lcs-lemma-2 xs)
+
+_is-CS-of_ : ∀ {A : Set} → List A → List A × List A → Set
+_is-CS-of_ zs (xs , ys) = (zs ⊑ xs) × (zs ⊑ ys)
+
+thereom-1 : ∀ {p} → lcs (proj₁ p) (proj₂ p) is-CS-of p
+thereom-1 {(xs , ys)} = (lcs-lemma-1 ys , lcs-lemma-2 xs)
 
 tail-⊑ : ∀ {a} {A : Set a} {x : A} {xs} {ys} → x ∷ xs ⊑ ys → xs ⊑ ys
 tail-⊑ (here xs⊑ys) = there xs⊑ys
