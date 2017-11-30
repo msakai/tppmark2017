@@ -3,11 +3,12 @@ module LCSNaive where
 open import Data.Empty
 open import Data.List
 open import Data.Nat
-open import Data.Nat.Properties using (≤-step; ≰⇒>; n≤1+n)
+open import Data.Nat.Properties
 open import Relation.Binary
-import Relation.Binary.PartialOrderReasoning as PoR
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
+
+open ≤-Reasoning
 open DecTotalOrder decTotalOrder using () renaming (refl to ≤-refl)
 
 infix 4 _⊑_
@@ -22,8 +23,6 @@ longest : ∀ {a} {A : Set a} → List A → List A → List A
 longest xs ys with length xs ≤? length ys
 ... | yes xs≤ys = ys
 ... | no  xs≰ys = xs
-  where
-    open IsDecTotalOrder
 
 lcs : List ℕ → List ℕ → List ℕ
 lcs [] _ = []
@@ -36,15 +35,11 @@ longest-either : ∀ {a} {A : Set a} {b} (P : List A → Set b) {xs ys : List A}
 longest-either P {xs} {ys} Pxs Pys with length xs ≤? length ys
 ... | yes xs≤ys = Pys
 ... | no ¬xs≤ys = Pxs
-  where
-    open IsDecTotalOrder
 
 longest-left : ∀ {a} {A : Set a} (xs ys : List A) → length xs ≤ length (longest xs ys)
 longest-left xs ys with length xs ≤? length ys
 ... | yes xs≤ys = xs≤ys
 ... | no _      = ≤-refl
-  where
-    open IsDecTotalOrder
 
 longest-right : ∀ {a} {A : Set a} (xs ys : List A) → length ys ≤ length (longest xs ys)
 longest-right xs ys with length xs ≤? length ys
@@ -57,9 +52,6 @@ longest-right xs ys with length xs ≤? length ys
         ≤⟨ ≰⇒> xs≰ys ⟩
           length xs
         ∎
-  where
-    open IsDecTotalOrder
-    open ≤-Reasoning
 
 lcs-lemma-1 : ∀ {xs} ys → lcs xs ys ⊑ xs
 lcs-lemma-1 {[]} _     = empty
@@ -93,22 +85,19 @@ length-⊑ (there xs⊑y∷ys) = ≤-step (length-⊑ xs⊑y∷ys)
 ⊑-refl {_} {_} {[]} = empty
 ⊑-refl {_} {_} {x ∷ xs} = here ⊑-refl
 
-length-lcs-cons-1 : ∀ {x} {xs} {ys} → length (lcs xs ys) ≤ length (lcs (x ∷ xs) ys)
-length-lcs-cons-1 {x} {xs} {ys} = {!!}
+⊑-trans : ∀ {a} {A : Set a} {xs ys zs : List A} → xs ⊑ ys → ys ⊑ zs → xs ⊑ zs
+⊑-trans {a} {A} {[]} {ys} {zs} empty ys⊑zs = empty
+⊑-trans {a} {A} {xs} {y ∷ ys} {zs} (there xs⊑ys) y∷ys⊑zs = ⊑-trans xs⊑ys (tail-⊑ y∷ys⊑zs)
+⊑-trans {a} {A} {x ∷ xs} {.x ∷ ys} {.x ∷ zs} (here xs⊑ys) (here    ys⊑zs) = here  (⊑-trans xs⊑ys ys⊑zs)
+⊑-trans {a} {A} {x ∷ xs} {.x ∷ ys} {z ∷ zs}  (here xs⊑ys) (there x∷ys⊑zs) = there (⊑-trans (here xs⊑ys) x∷ys⊑zs)
 
-length-lcs-cons-2 : ∀ {xs} {y} {ys} → length (lcs xs ys) ≤ length (lcs xs (y ∷ ys))
-length-lcs-cons-2 {xs} {y} {ys} = {!!}
-
-length-longest-lcs-cons : ∀ {xs} {ys} {x} {y} → length (lcs xs ys) ≤ length (longest (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)))
-length-longest-lcs-cons {xs} {ys} {x} {y} = longest-either (\ws → length (lcs xs ys) ≤ length ws) {lcs (x ∷ xs) ys} {lcs xs (y ∷ ys)} lem1 lem2
-  where
-    lem1 : length (lcs xs ys) ≤ length (lcs (x ∷ xs) ys)
-    lem1 = length-lcs-cons-1 {x} {xs} {ys}
-    lem2 : length (lcs xs ys) ≤ length (lcs xs (y ∷ ys))
-    lem2 = length-lcs-cons-2 {xs} {y} {ys}
-
+{-# TERMINATING #-}
 theorem-2 : ∀ xs ys zs → zs ⊑ xs → zs ⊑ ys → length zs ≤ length (lcs xs ys)
 theorem-2 []      ys .[] empty []⊑ys = ≤-refl
+{-
+theorem-2 []      [] .[] empty empty = ≤-refl
+theorem-2 [] (_ ∷ _) .[] empty []⊑ys = ≤-refl
+-}
 theorem-2 (_ ∷ _) [] .[] []⊑xs empty = ≤-refl
 theorem-2 (x ∷ xs) (y   ∷ ys) [] _ _ = z≤n
 theorem-2 (x ∷ xs) (y   ∷ ys) (z  ∷ zs) z∷zs⊑x∷xs z∷zs⊑y∷ys with x ≟ y
@@ -116,36 +105,27 @@ theorem-2 (x ∷ xs) (.x  ∷ ys) (.x ∷ zs) (here zs⊑xs) x∷zs⊑x∷ys | y
 theorem-2 (x ∷ xs) (.x  ∷ ys) (.x ∷ zs) x∷zs⊑x∷xs (here zs⊑ys) | yes refl = s≤s (theorem-2 xs ys zs (tail-⊑-tail x∷zs⊑x∷xs) zs⊑ys)
 theorem-2 (x ∷ xs) (.x  ∷ ys) (z  ∷ zs) (there z∷zs⊑xs) (there z∷zs⊑ys) | yes refl = ≤-step (theorem-2 xs ys (z ∷ zs) z∷zs⊑xs z∷zs⊑ys)
 theorem-2 (x ∷ xs) (.x  ∷ ys) (.x ∷ zs) (here    zs⊑xs) (here    zs⊑ys) | no x≢x = ⊥-elim (x≢x refl)
-theorem-2 (x ∷ xs) (y   ∷ ys) (z  ∷ zs) (there z∷zs⊑xs) (there z∷zs⊑ys) | no x≢y =
-  begin
-    suc (length zs)
-  ≤⟨ theorem-2 xs ys (z ∷ zs) (z∷zs⊑xs) (z∷zs⊑ys) ⟩
-    length (lcs xs ys)
-  ≤⟨ length-longest-lcs-cons {xs} {ys} {x} {y} ⟩
-    length (longest (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)))
-  ∎
-  where open ≤-Reasoning
+theorem-2 (x ∷ xs) (y   ∷ ys) (z  ∷ zs) (there z∷zs⊑xs) (there z∷zs⊑ys) | no x≢y = lem3
+  where
+    lem1 : length (z ∷ zs) ≤ length (lcs (x ∷ xs) ys)
+    lem1 = theorem-2 (x ∷ xs) ys (z ∷ zs) (there z∷zs⊑xs) z∷zs⊑ys
+    lem2 : length (z ∷ zs) ≤ length (lcs xs (y ∷ ys))
+    lem2 = theorem-2 xs (y ∷ ys) (z ∷ zs) z∷zs⊑xs (there z∷zs⊑ys)
+    lem3 : length (z ∷ zs) ≤ length (longest (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)))
+    lem3 = longest-either (\ws → length (z ∷ zs) ≤ length ws) {lcs (x ∷ xs) ys} {lcs xs (y ∷ ys)} lem1 lem2
 theorem-2 (x ∷ xs) (y ∷ ys) (.x ∷ zs) (here zs⊑xs) (there x∷zs⊑ys) | no x≢y =
   begin
     length (x ∷ zs)
-  ≤⟨ ≤-refl ⟩
-    suc (length zs)
   ≤⟨ theorem-2 (x ∷ xs) ys (x ∷ zs) (here zs⊑xs) x∷zs⊑ys ⟩
     length (lcs (x ∷ xs) ys)
   ≤⟨ longest-left (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)) ⟩
     length (longest (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)))
   ∎
-  where
-    open ≤-Reasoning
 theorem-2 (x ∷ xs) (y ∷ ys) (.y ∷ zs) (there y∷zs⊑xs) (here zs⊑ys) | no x≢y =
   begin
     length (x ∷ zs)
-  ≤⟨ ≤-refl ⟩
-    suc (length zs)
   ≤⟨ theorem-2 xs (y ∷ ys) (y ∷ zs) y∷zs⊑xs (here zs⊑ys) ⟩
     length (lcs xs (y ∷ ys))
   ≤⟨ longest-right (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)) ⟩
     length (longest (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)))
   ∎
-  where
-    open ≤-Reasoning
