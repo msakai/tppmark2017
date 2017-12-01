@@ -5,7 +5,7 @@
 -- Latest version is available at <https://github.com/msakai/tppmark2017>.
 ------------------------------------------------------------------------
 
-module LCSNaive where
+module LCS where
 
 import Level using (zero)
 open import Data.Empty
