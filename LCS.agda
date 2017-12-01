@@ -160,9 +160,9 @@ module _ {ℓ} {A} where
     open ≡-Reasoning
     lem =
       begin
-        length xs + length (y ∷ ys) 
+        length xs + length (y ∷ ys)
       ≡⟨ refl ⟩
-        length xs + suc (length ys) 
+        length xs + suc (length ys)
       ≡⟨ +-suc (length xs) (length ys) ⟩
         suc (length xs + length ys)
       ∎
@@ -177,43 +177,31 @@ module _ {ℓ} {A} where
 
 -- ---------------------------------------------------------------------------
 
-step-P : ∀ p → Set
-step-P p = ∀ zs → zs is-common-subsequence-of p → length zs ≤ length (LCS (proj₁ p) (proj₂ p))
+P : ∀ p → Set
+P p = ∀ zs → zs is-common-subsequence-of p → length zs ≤ length (LCS (proj₁ p) (proj₂ p))
 
-step : ∀ p → (∀ q → q ⊰ p → step-P q) → step-P p
-step ([] , ys) step-H .[] (empty , []⊑ys) = ≤-refl
-{-
-step ([] ,      []) step-H .[] (empty , empty) = ≤-refl
-step ([] , (_ ∷ _)) step-H .[] (empty , []⊑ys) = ≤-refl
--}
-step (_ ∷ _ , []) step-H .[] ([]⊑xs , empty) = ≤-refl
-step (x ∷ xs ,  y ∷ ys) step-H [] _ = z≤n
-step (x ∷ xs ,  y ∷ ys) step-H (z  ∷ zs) (z∷zs⊑x∷xs     , z∷zs⊑y∷ys ) with x ≟ y
-step (x ∷ xs , .x ∷ ys) step-H (.x ∷ zs) (here zs⊑xs    , x∷zs⊑x∷ys ) | yes refl = s≤s (step-H (xs , ys) (⊰-both x xs x ys) zs (zs⊑xs , tail-⊑-tail x∷zs⊑x∷ys))
-step (x ∷ xs , .x ∷ ys) step-H (.x ∷ zs) (x∷zs⊑x∷xs     , here zs⊑ys) | yes refl = s≤s (step-H (xs , ys) (⊰-both x xs x ys) zs (tail-⊑-tail x∷zs⊑x∷xs , zs⊑ys))
-step (x ∷ xs , .x ∷ ys) step-H (z  ∷ zs) (there z∷zs⊑xs , there z∷zs⊑ys) | yes refl = ≤-step (step-H (xs , ys) (⊰-both x xs x ys) (z ∷ zs) (z∷zs⊑xs , z∷zs⊑ys))
-step (x ∷ xs , .x ∷ ys) step-H (.x ∷ zs) (here    zs⊑xs , here    zs⊑ys) | no x≢x = ⊥-elim (x≢x refl)
-step (x ∷ xs ,  y ∷ ys) step-H (z  ∷ zs) (there z∷zs⊑xs , there z∷zs⊑ys) | no x≢y = lem3
-  where
-    lem1 : length (z ∷ zs) ≤ length (LCS (x ∷ xs) ys)
-    lem1 = step-H (x ∷ xs , ys) (⊰-right (x ∷ xs) y ys) (z ∷ zs) (there z∷zs⊑xs , z∷zs⊑ys)
-    lem2 : length (z ∷ zs) ≤ length (LCS xs (y ∷ ys))
-    lem2 = step-H (xs , y ∷ ys) (⊰-left x xs (y ∷ ys)) (z ∷ zs) (z∷zs⊑xs , there z∷zs⊑ys)
-    lem3 : length (z ∷ zs) ≤ length (longest (LCS (x ∷ xs) ys) (LCS xs (y ∷ ys)))
-    lem3 = longest-either (\ws → length (z ∷ zs) ≤ length ws) {LCS (x ∷ xs) ys} {LCS xs (y ∷ ys)} lem1 lem2
-step (x ∷ xs , y ∷ ys) step-H (.x ∷ zs) (here zs⊑xs , there x∷zs⊑ys) | no x≢y =
+step : ∀ p → (∀ q → q ⊰ p → P q) → P p
+step ([]    , _ ) rec .[] (empty , _) = ≤-refl
+step (_ ∷ _ , []) rec .[] (_ , empty) = ≤-refl
+step (x ∷ xs ,  y ∷ ys) rec [] _ = z≤n
+step (x ∷ xs ,  y ∷ ys) rec ( z ∷ zs) (z∷zs⊑x∷xs     , z∷zs⊑y∷ys ) with x ≟ y
+step (x ∷ xs , .x ∷ ys) rec (.x ∷ zs) (here zs⊑xs    , x∷zs⊑x∷ys )    | yes refl = s≤s (rec (xs , ys) (⊰-both x xs x ys) zs (zs⊑xs , tail-⊑-tail x∷zs⊑x∷ys))
+step (x ∷ xs , .x ∷ ys) rec (.x ∷ zs) (x∷zs⊑x∷xs     , here zs⊑ys)    | yes refl = s≤s (rec (xs , ys) (⊰-both x xs x ys) zs (tail-⊑-tail x∷zs⊑x∷xs , zs⊑ys))
+step (x ∷ xs , .x ∷ ys) rec ( z ∷ zs) (there z∷zs⊑xs , there z∷zs⊑ys) | yes refl = ≤-step (rec (xs , ys) (⊰-both x xs x ys) (z ∷ zs) (z∷zs⊑xs , z∷zs⊑ys))
+step (x ∷ xs , .x ∷ ys) rec (.x ∷ zs) (here zs⊑xs , here zs⊑ys)   | no x≢x = ⊥-elim (x≢x refl)
+step (x ∷ xs ,  y ∷ ys) rec ( z ∷ zs) (z∷zs⊑x∷xs , there z∷zs⊑ys) | no x≢y =
   begin
-    length (x ∷ zs)
-  ≤⟨ step-H (x ∷ xs , ys) (⊰-right (x ∷ xs) y ys) (x ∷ zs) (here zs⊑xs , x∷zs⊑ys) ⟩
+    length (z ∷ zs)
+  ≤⟨ rec (x ∷ xs , ys) (⊰-right (x ∷ xs) y ys) (z ∷ zs) (z∷zs⊑x∷xs , z∷zs⊑ys) ⟩
     length (LCS (x ∷ xs) ys)
   ≤⟨ longest-left (LCS (x ∷ xs) ys) (LCS xs (y ∷ ys)) ⟩
     length (longest (LCS (x ∷ xs) ys) (LCS xs (y ∷ ys)))
   ∎
   where open ≤-Reasoning
-step (x ∷ xs , y ∷ ys) step-H (.y ∷ zs) (there y∷zs⊑xs , here zs⊑ys) | no x≢y =
+step (x ∷ xs ,  y ∷ ys) rec ( z ∷ zs) (there z∷zs⊑xs , z∷zs⊑y∷ys) | no x≢y =
   begin
-    length (x ∷ zs)
-  ≤⟨ step-H (xs , y ∷ ys) (⊰-left x xs (y ∷ ys)) (y ∷ zs) (y∷zs⊑xs , here zs⊑ys) ⟩
+    length (z ∷ zs)
+  ≤⟨ rec (xs , y ∷ ys) (⊰-left x xs (y ∷ ys)) (z ∷ zs) (z∷zs⊑xs , z∷zs⊑y∷ys) ⟩
     length (LCS xs (y ∷ ys))
   ≤⟨ longest-right (LCS (x ∷ xs) ys) (LCS xs (y ∷ ys)) ⟩
     length (longest (LCS (x ∷ xs) ys) (LCS xs (y ∷ ys)))
@@ -221,6 +209,6 @@ step (x ∷ xs , y ∷ ys) step-H (.y ∷ zs) (there y∷zs⊑xs , here zs⊑ys)
   where open ≤-Reasoning
 
 theorem-2 : ∀ p zs → zs is-common-subsequence-of p → length zs ≤ length (LCS (proj₁ p) (proj₂ p))
-theorem-2 p = ⊰-rec step-P step p
+theorem-2 p = ⊰-rec P step p
 
 -- ---------------------------------------------------------------------------
