@@ -2,6 +2,8 @@
 -- TPPmark2017 problem.
 -- See <https://aigarashi.github.io/TPP2017/> for details.
 --
+-- Checked with Agda 2.5.3 and Agda standard library 0.14
+--
 -- Latest version is available at <https://github.com/msakai/tppmark2017>.
 ------------------------------------------------------------------------
 
@@ -20,8 +22,6 @@ open import Induction.WellFounded
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
-
-open DecTotalOrder decTotalOrder using () renaming (refl to ≤-refl)
 
 infix 4 _⊑_ _⊰_
 
@@ -112,7 +112,7 @@ LCS-⊑-left (x ∷ xs) (y ∷ ys) with x ≟ y
 
 LCS-⊑-right : ∀ xs ys → LCS xs ys ⊑ ys
 LCS-⊑-right [] _       = empty
-LCS-⊑-right (_ ∷ _) {[]} = empty
+LCS-⊑-right (_ ∷ _) [] = empty
 LCS-⊑-right (x ∷ xs) (y  ∷ ys) with x ≟ y
 LCS-⊑-right (x ∷ xs) (.x ∷ ys) | yes refl = here (LCS-⊑-right xs ys)
 LCS-⊑-right (x ∷ xs) (y  ∷ ys) | no  x≢y  = longest-either (\zs → zs ⊑ y ∷ ys) (there (LCS-⊑-right (x ∷ xs) ys)) (LCS-⊑-right xs (y ∷ ys))
@@ -127,7 +127,7 @@ sum-length : ∀ {A : Set} → List A × List A → ℕ
 sum-length (xs , ys) = length xs + length ys
 
 _⊰_ : ∀ {A : Set} → Rel (List A × List A) Level.zero
-_⊰_ = _<′_ on sum-length
+_⊰_ = _<_ on sum-length
 
 ⊰-well-founded : ∀ {A : Set} → Well-founded (_⊰_ {A})
 ⊰-well-founded = Inverse-image.well-founded sum-length <-well-founded
@@ -138,11 +138,8 @@ module _ {ℓ} {A} where
              ; wfRec to ⊰-rec
              )
 
-≤-reflexive : ∀ {n} {m} → n ≡ m → n ≤ m
-≤-reflexive {n} {.n} refl = ≤-refl
-
 ⊰-left : ∀ {A} (x : A) (xs ys : List A) → (xs , ys) ⊰ (x ∷ xs , ys)
-⊰-left x xs ys = ≤⇒≤′ (≤-reflexive lem)
+⊰-left x xs ys = ≤-reflexive lem
   where
     open ≡-Reasoning
     lem =
@@ -155,7 +152,7 @@ module _ {ℓ} {A} where
       ∎
 
 ⊰-right : ∀ {A} (xs : List A) (y : A) (ys : List A) → (xs , ys) ⊰ (xs , y ∷ ys)
-⊰-right {_} xs y ys = ≤⇒≤′ (≤-reflexive (sym lem))
+⊰-right {_} xs y ys = ≤-reflexive (sym lem)
   where
     open ≡-Reasoning
     lem =
@@ -168,7 +165,7 @@ module _ {ℓ} {A} where
       ∎
 
 ⊰-both : ∀ {A} (x : A) (xs : List A) (y : A) (ys : List A) → (xs , ys) ⊰ (x ∷ xs , y ∷ ys)
-⊰-both x xs y ys = ≤⇒≤′ (<-trans (≤′⇒≤ lem1) (≤′⇒≤ lem2))
+⊰-both x xs y ys = <-trans lem1 lem2
   where
     lem1 : (xs , ys) ⊰ (x ∷ xs , ys)
     lem1 = ⊰-left x xs ys
