@@ -4,6 +4,7 @@ open import Data.Empty
 open import Data.List
 open import Data.Nat
 open import Data.Nat.Properties
+open import Data.Nat.Properties.Simple
 open import Data.Product
 open import Function
 open import Induction.Nat
@@ -12,7 +13,6 @@ open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 
-open ≤-Reasoning
 open DecTotalOrder decTotalOrder using () renaming (refl to ≤-refl)
 
 infix 4 _⊑_ _⊰_
@@ -56,6 +56,7 @@ longest-right xs ys with length xs ≤? length ys
         ≤⟨ ≰⇒> xs≰ys ⟩
           length xs
         ∎
+  where open ≤-Reasoning
 
 lcs-lemma-1 : ∀ {xs} ys → lcs xs ys ⊑ xs
 lcs-lemma-1 {[]} _     = empty
@@ -116,14 +117,42 @@ module _ {ℓ} {A} where
              ; wfRec to ⊰-rec
              )
 
-⊰-both : ∀ {A} {x y : A} {xs ys : List A} → (xs , ys) ⊰ (x ∷ xs , y ∷ ys)
-⊰-both {_} {x} {y} {xs} {ys} = {!!}
+≤-reflexive : ∀ {n} {m} → n ≡ m → n ≤ m
+≤-reflexive {n} {.n} refl = ≤-refl
 
 ⊰-left : ∀ {A} {x : A} {xs ys : List A} → (xs , ys) ⊰ (x ∷ xs , ys)
-⊰-left {_} {x} {xs} {ys} = {!!}
+⊰-left {_} {x} {xs} {ys} = ≤⇒≤′ (≤-reflexive lem)
+  where
+    open ≡-Reasoning
+    lem =
+      begin
+        suc (length xs + length ys)
+      ≡⟨ refl ⟩
+        suc (length xs) + length ys
+      ≡⟨ refl ⟩
+        length (x ∷ xs) + length ys
+      ∎
 
 ⊰-right : ∀ {A} {y : A} {xs ys : List A} → (xs , ys) ⊰ (xs , y ∷ ys)
-⊰-right {_} {y} {xs} {ys} = {!!}
+⊰-right {_} {y} {xs} {ys} = ≤⇒≤′ (≤-reflexive (sym lem))
+  where
+    open ≡-Reasoning
+    lem =
+      begin
+        length xs + length (y ∷ ys) 
+      ≡⟨ refl ⟩
+        length xs + suc (length ys) 
+      ≡⟨ +-suc (length xs) (length ys) ⟩
+        suc (length xs + length ys)
+      ∎
+
+⊰-both : ∀ {A} {x y : A} {xs ys : List A} → (xs , ys) ⊰ (x ∷ xs , y ∷ ys)
+⊰-both {_} {x} {y} {xs} {ys} = ≤⇒≤′ (<-trans (≤′⇒≤ lem1) (≤′⇒≤ lem2))
+  where
+    lem1 : (xs , ys) ⊰ (x ∷ xs , ys)
+    lem1 = ⊰-left {_} {x} {xs} {ys}
+    lem2 : (x ∷ xs , ys) ⊰ (x ∷ xs , y ∷ ys)
+    lem2 = ⊰-right {_} {y} {x ∷ xs} {ys}
 
 step-P : ∀ p → Set
 step-P p = ∀ zs → zs is-CS-of p → length zs ≤ length (lcs (proj₁ p) (proj₂ p))
@@ -157,6 +186,7 @@ step (x ∷ xs , y ∷ ys) step-H (.x ∷ zs) (here zs⊑xs , there x∷zs⊑ys)
   ≤⟨ longest-left (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)) ⟩
     length (longest (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)))
   ∎
+  where open ≤-Reasoning
 step (x ∷ xs , y ∷ ys) step-H (.y ∷ zs) (there y∷zs⊑xs , here zs⊑ys) | no x≢y =
   begin
     length (x ∷ zs)
@@ -165,6 +195,7 @@ step (x ∷ xs , y ∷ ys) step-H (.y ∷ zs) (there y∷zs⊑xs , here zs⊑ys)
   ≤⟨ longest-right (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)) ⟩
     length (longest (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)))
   ∎
+  where open ≤-Reasoning
 
 theorem-2 : ∀ p zs → zs is-CS-of p → length zs ≤ length (lcs (proj₁ p) (proj₂ p))
 theorem-2 p = ⊰-rec step-P step p
