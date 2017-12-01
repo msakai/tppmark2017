@@ -5,6 +5,9 @@ open import Data.List
 open import Data.Nat
 open import Data.Nat.Properties
 open import Data.Product
+open import Function
+open import Induction.Nat
+open import Induction.WellFounded
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
@@ -12,7 +15,7 @@ open import Relation.Nullary
 open ≤-Reasoning
 open DecTotalOrder decTotalOrder using () renaming (refl to ≤-refl)
 
-infix 4 _⊑_
+infix 4 _⊑_ _⊰_
 
 -- is-subsequence-of relation
 data _⊑_ {a} {A : Set a} : List A → List A → Set a where
@@ -98,41 +101,70 @@ length-⊑ (there xs⊑y∷ys) = ≤-step (length-⊑ xs⊑y∷ys)
 ⊑-trans {a} {A} {x ∷ xs} {.x ∷ ys} {.x ∷ zs} (here xs⊑ys) (here    ys⊑zs) = here  (⊑-trans xs⊑ys ys⊑zs)
 ⊑-trans {a} {A} {x ∷ xs} {.x ∷ ys} {z ∷ zs}  (here xs⊑ys) (there x∷ys⊑zs) = there (⊑-trans (here xs⊑ys) x∷ys⊑zs)
 
-{-# TERMINATING #-}
-theorem-2 : ∀ xs ys zs → zs ⊑ xs → zs ⊑ ys → length zs ≤ length (lcs xs ys)
-theorem-2 []      ys .[] empty []⊑ys = ≤-refl
+sum-length : ∀ {A : Set} → List A × List A → ℕ
+sum-length (xs , ys) = length xs + length ys
+
+_⊰_ : ∀ {A : Set} → List A × List A → List A × List A → Set
+_⊰_ = _<′_ on sum-length
+
+⊰-well-founded : ∀ {A : Set} → Well-founded (_⊰_ {A})
+⊰-well-founded = Inverse-image.well-founded sum-length <-well-founded
+
+module _ {ℓ} {A} where
+  open All (⊰-well-founded {A}) ℓ public
+    renaming ( wfRec-builder to ⊰-rec-builder
+             ; wfRec to ⊰-rec
+             )
+
+⊰-both : ∀ {A} {x y : A} {xs ys : List A} → (xs , ys) ⊰ (x ∷ xs , y ∷ ys)
+⊰-both {_} {x} {y} {xs} {ys} = {!!}
+
+⊰-left : ∀ {A} {x : A} {xs ys : List A} → (xs , ys) ⊰ (x ∷ xs , ys)
+⊰-left {_} {x} {xs} {ys} = {!!}
+
+⊰-right : ∀ {A} {y : A} {xs ys : List A} → (xs , ys) ⊰ (xs , y ∷ ys)
+⊰-right {_} {y} {xs} {ys} = {!!}
+
+step-P : ∀ p → Set
+step-P p = ∀ zs → zs is-CS-of p → length zs ≤ length (lcs (proj₁ p) (proj₂ p))
+
+step : ∀ p → (∀ q → q ⊰ p → step-P q) → step-P p
+step ([] , ys) step-H .[] (empty , []⊑ys) = ≤-refl
 {-
-theorem-2 []      [] .[] empty empty = ≤-refl
-theorem-2 [] (_ ∷ _) .[] empty []⊑ys = ≤-refl
+step ([] ,      []) step-H .[] (empty , empty) = ≤-refl
+step ([] , (_ ∷ _)) step-H .[] (empty , []⊑ys) = ≤-refl
 -}
-theorem-2 (_ ∷ _) [] .[] []⊑xs empty = ≤-refl
-theorem-2 (x ∷ xs) (y   ∷ ys) [] _ _ = z≤n
-theorem-2 (x ∷ xs) (y   ∷ ys) (z  ∷ zs) z∷zs⊑x∷xs z∷zs⊑y∷ys with x ≟ y
-theorem-2 (x ∷ xs) (.x  ∷ ys) (.x ∷ zs) (here zs⊑xs) x∷zs⊑x∷ys | yes refl = s≤s (theorem-2 xs ys zs zs⊑xs (tail-⊑-tail x∷zs⊑x∷ys))
-theorem-2 (x ∷ xs) (.x  ∷ ys) (.x ∷ zs) x∷zs⊑x∷xs (here zs⊑ys) | yes refl = s≤s (theorem-2 xs ys zs (tail-⊑-tail x∷zs⊑x∷xs) zs⊑ys)
-theorem-2 (x ∷ xs) (.x  ∷ ys) (z  ∷ zs) (there z∷zs⊑xs) (there z∷zs⊑ys) | yes refl = ≤-step (theorem-2 xs ys (z ∷ zs) z∷zs⊑xs z∷zs⊑ys)
-theorem-2 (x ∷ xs) (.x  ∷ ys) (.x ∷ zs) (here    zs⊑xs) (here    zs⊑ys) | no x≢x = ⊥-elim (x≢x refl)
-theorem-2 (x ∷ xs) (y   ∷ ys) (z  ∷ zs) (there z∷zs⊑xs) (there z∷zs⊑ys) | no x≢y = lem3
+step (_ ∷ _ , []) step-H .[] ([]⊑xs , empty) = ≤-refl
+step (x ∷ xs ,  y ∷ ys) step-H [] _ = z≤n
+step (x ∷ xs ,  y ∷ ys) step-H (z  ∷ zs) (z∷zs⊑x∷xs     , z∷zs⊑y∷ys ) with x ≟ y
+step (x ∷ xs , .x ∷ ys) step-H (.x ∷ zs) (here zs⊑xs    , x∷zs⊑x∷ys ) | yes refl = s≤s (step-H (xs , ys) (⊰-both {_} {x} {x} {xs} {ys}) zs (zs⊑xs , tail-⊑-tail x∷zs⊑x∷ys))
+step (x ∷ xs , .x ∷ ys) step-H (.x ∷ zs) (x∷zs⊑x∷xs     , here zs⊑ys) | yes refl = s≤s (step-H (xs , ys) (⊰-both {_} {x} {x} {xs} {ys}) zs (tail-⊑-tail x∷zs⊑x∷xs , zs⊑ys))
+step (x ∷ xs , .x ∷ ys) step-H (z  ∷ zs) (there z∷zs⊑xs , there z∷zs⊑ys) | yes refl = ≤-step (step-H (xs , ys) (⊰-both {_} {x} {x} {xs} {ys}) (z ∷ zs) (z∷zs⊑xs , z∷zs⊑ys))
+step (x ∷ xs , .x ∷ ys) step-H (.x ∷ zs) (here    zs⊑xs , here    zs⊑ys) | no x≢x = ⊥-elim (x≢x refl)
+step (x ∷ xs ,  y ∷ ys) step-H (z  ∷ zs) (there z∷zs⊑xs , there z∷zs⊑ys) | no x≢y = lem3
   where
     lem1 : length (z ∷ zs) ≤ length (lcs (x ∷ xs) ys)
-    lem1 = theorem-2 (x ∷ xs) ys (z ∷ zs) (there z∷zs⊑xs) z∷zs⊑ys
+    lem1 = step-H (x ∷ xs , ys) (⊰-right {_} {y} {x ∷ xs} {ys}) (z ∷ zs) (there z∷zs⊑xs , z∷zs⊑ys)
     lem2 : length (z ∷ zs) ≤ length (lcs xs (y ∷ ys))
-    lem2 = theorem-2 xs (y ∷ ys) (z ∷ zs) z∷zs⊑xs (there z∷zs⊑ys)
+    lem2 = step-H (xs , y ∷ ys) (⊰-left {_} {x} {xs} {y ∷ ys}) (z ∷ zs) (z∷zs⊑xs , there z∷zs⊑ys)
     lem3 : length (z ∷ zs) ≤ length (longest (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)))
     lem3 = longest-either (\ws → length (z ∷ zs) ≤ length ws) {lcs (x ∷ xs) ys} {lcs xs (y ∷ ys)} lem1 lem2
-theorem-2 (x ∷ xs) (y ∷ ys) (.x ∷ zs) (here zs⊑xs) (there x∷zs⊑ys) | no x≢y =
+step (x ∷ xs , y ∷ ys) step-H (.x ∷ zs) (here zs⊑xs , there x∷zs⊑ys) | no x≢y =
   begin
     length (x ∷ zs)
-  ≤⟨ theorem-2 (x ∷ xs) ys (x ∷ zs) (here zs⊑xs) x∷zs⊑ys ⟩
+  ≤⟨ step-H (x ∷ xs , ys) (⊰-right {_} {y} {x ∷ xs} {ys}) (x ∷ zs) (here zs⊑xs , x∷zs⊑ys) ⟩
     length (lcs (x ∷ xs) ys)
   ≤⟨ longest-left (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)) ⟩
     length (longest (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)))
   ∎
-theorem-2 (x ∷ xs) (y ∷ ys) (.y ∷ zs) (there y∷zs⊑xs) (here zs⊑ys) | no x≢y =
+step (x ∷ xs , y ∷ ys) step-H (.y ∷ zs) (there y∷zs⊑xs , here zs⊑ys) | no x≢y =
   begin
     length (x ∷ zs)
-  ≤⟨ theorem-2 xs (y ∷ ys) (y ∷ zs) y∷zs⊑xs (here zs⊑ys) ⟩
+  ≤⟨ step-H (xs , y ∷ ys) (⊰-left {_} {x} {xs} {y ∷ ys}) (y ∷ zs) (y∷zs⊑xs , here zs⊑ys) ⟩
     length (lcs xs (y ∷ ys))
   ≤⟨ longest-right (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)) ⟩
     length (longest (lcs (x ∷ xs) ys) (lcs xs (y ∷ ys)))
   ∎
+
+theorem-2 : ∀ p zs → zs is-CS-of p → length zs ≤ length (lcs (proj₁ p) (proj₂ p))
+theorem-2 p = ⊰-rec step-P step p
