@@ -175,7 +175,7 @@ module _ {ℓ} {A} where
 -- ---------------------------------------------------------------------------
 
 P : ∀ p → Set
-P p = ∀ zs → zs is-common-subsequence-of p → length zs ≤ length (LCS (proj₁ p) (proj₂ p))
+P (xs , ys) = ∀ zs → zs is-common-subsequence-of (xs , ys) → length zs ≤ length (LCS xs ys)
 
 step : ∀ p → (∀ q → q ⊰ p → P q) → P p
 step ([]    , _ ) rec .[] (empty , _) = ≤-refl
@@ -205,7 +205,7 @@ step (x ∷ xs ,  y ∷ ys) rec ( z ∷ zs) (there z∷zs⊑xs , z∷zs⊑y∷ys
   ∎
   where open ≤-Reasoning
 
-theorem-2 : ∀ p zs → zs is-common-subsequence-of p → length zs ≤ length (LCS (proj₁ p) (proj₂ p))
-theorem-2 p = ⊰-rec P step p
+theorem-2 : ∀ xs ys zs → zs is-common-subsequence-of (xs , ys) → length zs ≤ length (LCS xs ys)
+theorem-2 xs ys = ⊰-rec P step (xs , ys)
 
 -- ---------------------------------------------------------------------------
