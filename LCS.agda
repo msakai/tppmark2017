@@ -117,8 +117,8 @@ LCS-⊑-right (x ∷ xs) (y  ∷ ys) with x ≟ y
 LCS-⊑-right (x ∷ xs) (.x ∷ ys) | yes refl = here (LCS-⊑-right xs ys)
 LCS-⊑-right (x ∷ xs) (y  ∷ ys) | no  x≢y  = longest-either (\zs → zs ⊑ y ∷ ys) (there (LCS-⊑-right (x ∷ xs) ys)) (LCS-⊑-right xs (y ∷ ys))
 
-thereom-1 : ∀ {p} → LCS (proj₁ p) (proj₂ p) is-common-subsequence-of p
-thereom-1 {(xs , ys)} = (LCS-⊑-left xs ys , LCS-⊑-right xs ys)
+thereom-1 : ∀ xs ys → LCS xs ys is-common-subsequence-of (xs , ys)
+thereom-1 xs ys = (LCS-⊑-left xs ys , LCS-⊑-right xs ys)
 
 -- ---------------------------------------------------------------------------
 -- To prove the 'theorem-2' we first prepare for well-founded induction on pair of lists.
