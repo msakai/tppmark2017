@@ -152,7 +152,7 @@ module _ {ℓ} {A} where
       ∎
 
 ⊰-right : ∀ {A} (xs : List A) (y : A) (ys : List A) → (xs , ys) ⊰ (xs , y ∷ ys)
-⊰-right {_} xs y ys = ≤-reflexive (sym lem)
+⊰-right xs y ys = ≤-reflexive (sym lem)
   where
     open ≡-Reasoning
     lem =
