@@ -14,7 +14,6 @@ open import Data.Empty
 open import Data.List
 open import Data.Nat
 open import Data.Nat.Properties
-open import Data.Nat.Properties.Simple
 open import Data.Product
 open import Function
 open import Induction.Nat
@@ -180,25 +179,26 @@ P (xs , ys) = ∀ zs → zs is-common-subsequence-of (xs , ys) → length zs ≤
 step : ∀ p → (∀ q → q ⊰ p → P q) → P p
 step ([]    , _ ) rec .[] (empty , _) = ≤-refl
 step (_ ∷ _ , []) rec .[] (_ , empty) = ≤-refl
-step (x ∷ xs ,  y ∷ ys) rec [] _ = z≤n
-step (x ∷ xs ,  y ∷ ys) rec ( z ∷ zs) (z∷zs⊑x∷xs     , z∷zs⊑y∷ys ) with x ≟ y
-step (x ∷ xs , .x ∷ ys) rec (.x ∷ zs) (here zs⊑xs    , x∷zs⊑x∷ys )    | yes refl = s≤s (rec (xs , ys) (⊰-both x xs x ys) zs (zs⊑xs , tail-⊑-tail x∷zs⊑x∷ys))
-step (x ∷ xs , .x ∷ ys) rec (.x ∷ zs) (x∷zs⊑x∷xs     , here zs⊑ys)    | yes refl = s≤s (rec (xs , ys) (⊰-both x xs x ys) zs (tail-⊑-tail x∷zs⊑x∷xs , zs⊑ys))
-step (x ∷ xs , .x ∷ ys) rec ( z ∷ zs) (there z∷zs⊑xs , there z∷zs⊑ys) | yes refl = ≤-step (rec (xs , ys) (⊰-both x xs x ys) (z ∷ zs) (z∷zs⊑xs , z∷zs⊑ys))
-step (x ∷ xs , .x ∷ ys) rec (.x ∷ zs) (here zs⊑xs , here zs⊑ys)   | no x≢x = ⊥-elim (x≢x refl)
-step (x ∷ xs ,  y ∷ ys) rec ( z ∷ zs) (z∷zs⊑x∷xs , there z∷zs⊑ys) | no x≢y =
+step (x ∷ xs ,  y ∷ ys) rec zs (zs⊑x∷xs , zs⊑y∷ys ) with x ≟ y
+step (x ∷ xs ,  y ∷ ys) rec [] _ | yes _ = z≤n
+step (x ∷ xs , .x ∷ ys) rec (.x ∷ zs) (here zs⊑xs  , x∷zs⊑x∷ys  ) | yes refl = s≤s (rec (xs , ys) (⊰-both x xs x ys) zs (zs⊑xs , tail-⊑-tail x∷zs⊑x∷ys))
+step (x ∷ xs , .x ∷ ys) rec (.x ∷ zs) (x∷zs⊑x∷xs   , here  zs⊑ys) | yes refl = s≤s (rec (xs , ys) (⊰-both x xs x ys) zs (tail-⊑-tail x∷zs⊑x∷xs , zs⊑ys))
+step (x ∷ xs , .x ∷ ys) rec zs        (there zs⊑xs , there zs⊑ys) | yes refl = ≤-step (rec (xs , ys) (⊰-both x xs x ys) zs (zs⊑xs , zs⊑ys))
+step (x ∷ xs ,  y ∷ ys) rec [] _ | no _ = z≤n
+step (x ∷ xs , .x ∷ ys) rec (.x ∷ zs) (here zs⊑xs , here zs⊑ys) | no x≢x = ⊥-elim (x≢x refl)
+step (x ∷ xs ,  y ∷ ys) rec zs (zs⊑x∷xs , there zs⊑ys) | no x≢y =
   begin
-    length (z ∷ zs)
-  ≤⟨ rec (x ∷ xs , ys) (⊰-right (x ∷ xs) y ys) (z ∷ zs) (z∷zs⊑x∷xs , z∷zs⊑ys) ⟩
+    length zs
+  ≤⟨ rec (x ∷ xs , ys) (⊰-right (x ∷ xs) y ys) zs (zs⊑x∷xs , zs⊑ys) ⟩
     length (LCS (x ∷ xs) ys)
   ≤⟨ longest-left (LCS (x ∷ xs) ys) (LCS xs (y ∷ ys)) ⟩
     length (longest (LCS (x ∷ xs) ys) (LCS xs (y ∷ ys)))
   ∎
   where open ≤-Reasoning
-step (x ∷ xs ,  y ∷ ys) rec ( z ∷ zs) (there z∷zs⊑xs , z∷zs⊑y∷ys) | no x≢y =
+step (x ∷ xs ,  y ∷ ys) rec zs (there zs⊑xs , zs⊑y∷ys) | no x≢y =
   begin
-    length (z ∷ zs)
-  ≤⟨ rec (xs , y ∷ ys) (⊰-left x xs (y ∷ ys)) (z ∷ zs) (z∷zs⊑xs , z∷zs⊑y∷ys) ⟩
+    length zs
+  ≤⟨ rec (xs , y ∷ ys) (⊰-left x xs (y ∷ ys)) zs (zs⊑xs , zs⊑y∷ys) ⟩
     length (LCS xs (y ∷ ys))
   ≤⟨ longest-right (LCS (x ∷ xs) ys) (LCS xs (y ∷ ys)) ⟩
     length (longest (LCS (x ∷ xs) ys) (LCS xs (y ∷ ys)))
