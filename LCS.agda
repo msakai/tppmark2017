@@ -80,12 +80,12 @@ _is-common-subsequence-of_ zs (xs , ys) = (zs ⊑ xs) × (zs ⊑ ys)
 longest-either : ∀ {ℓ₁} {A : Set ℓ₁} {ℓ₂} (P : List A → Set ℓ₂) {xs ys : List A} → P xs → P ys → P (longest xs ys)
 longest-either P {xs} {ys} Pxs Pys with length xs ≤? length ys
 ... | yes xs≤ys = Pys
-... | no ¬xs≤ys = Pxs
+... | no  xs≰ys = Pxs
 
 longest-left : ∀ {ℓ} {A : Set ℓ} (xs ys : List A) → length xs ≤ length (longest xs ys)
 longest-left xs ys with length xs ≤? length ys
 ... | yes xs≤ys = xs≤ys
-... | no _      = ≤-refl
+... | no  xs≰ys = ≤-refl
 
 longest-right : ∀ {ℓ} {A : Set ℓ} (xs ys : List A) → length ys ≤ length (longest xs ys)
 longest-right xs ys with length xs ≤? length ys
